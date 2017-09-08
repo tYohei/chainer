@@ -99,12 +99,19 @@ def _create_symlink(fn, outdir, symlink_name):
         return
     if symlink_name is None or symlink_name == '':
         return
-    relsrc = os.path.join(outdir, fn)        # Relative path to src file
-    src = os.path.basename(relsrc)           # Name of to src file
-    dst = os.path.join(outdir, symlink_name) # Relative path to dst file
-    if os.path.exists(dst):
-        if os.path.islink(dst):
-            os.remove(dst)
-        else:
-            return
+
+    if os.path.isabs(symlink_name):
+        src = os.path.abspath(fn)
+    elif os.path.dirname(symlink_name) != '':
+        try:
+            symlink_dir = os.path.join(outdir, os.path.dirname(symlink_name))
+            os.makedirs(symlink_dir)
+        except OSError:
+            pass
+        src = os.path.relpath(fn, start=os.path.dirname(symlink_name))
+    else:
+        src = fn
+    dst = os.path.join(outdir, symlink_name)
+    if os.path.exists(dst) and os.path.islink(dst):
+        os.remove(dst)
     os.symlink(src, dst)
