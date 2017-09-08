@@ -42,7 +42,8 @@ def snapshot_object(target, filename, savefun=npz.save_npz):
 
 
 def snapshot(savefun=npz.save_npz,
-             filename='snapshot_iter_{.updater.iteration}'):
+             filename='snapshot_iter_{.updater.iteration}',
+             create_symlink=False):
     """Returns a trainer extension to take snapshots of the trainer.
 
     This extension serializes the trainer object and saves it to the output
@@ -73,12 +74,13 @@ def snapshot(savefun=npz.save_npz,
     """
     @extension.make_extension(trigger=(1, 'epoch'), priority=-100)
     def snapshot(trainer):
-        _snapshot_object(trainer, trainer, filename.format(trainer), savefun)
+        _snapshot_object(trainer, trainer, filename.format(trainer), savefun,
+                         create_symlink)
 
     return snapshot
 
 
-def _snapshot_object(trainer, target, filename, savefun):
+def _snapshot_object(trainer, target, filename, savefun, create_symlink):
     fn = filename.format(trainer)
     prefix = 'tmp' + fn
     fd, tmppath = tempfile.mkstemp(prefix=prefix, dir=trainer.out)
@@ -90,3 +92,19 @@ def _snapshot_object(trainer, target, filename, savefun):
         raise
     os.close(fd)
     shutil.move(tmppath, os.path.join(trainer.out, fn))
+    if create_symlink:
+        _create_symlink(fn, trainer.out, 'latest_snapshot')
+
+def _create_symlink(fn, outdir, linkfn):
+    if not os.path.isdir(outdir):
+        return
+    pwd = os.getcwd()
+    os.chdir(outdir)
+    src = os.path.join(fn)
+    dst = os.path.join(linkfn)
+    if os.path.exists(dst):
+        if os.path.islink(linkfn):
+            os.remove(dst)
+        else:
+            return
+    os.symlink(src, dst)
