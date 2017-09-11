@@ -6,7 +6,7 @@ from chainer.serializers import npz
 from chainer.training import extension
 
 
-def snapshot_object(target, filename, savefun=npz.save_npz):
+def snapshot_object(target, filename, savefun=npz.save_npz, symlink_name=None):
     """Returns a trainer extension to take snapshots of a given object.
 
     This extension serializes the given object and saves it to the output
@@ -29,6 +29,8 @@ def snapshot_object(target, filename, savefun=npz.save_npz):
             ``'snapshot_10000'`` at the 10,000th iteration.
         savefun: Function to save the object. It takes two arguments: the
             output file path and the object to serialize.
+        symlink_name (str): Name of symbolic file which the latest snapshot
+            file is linked. This string cannot be formated as `filename`.
 
     Returns:
         An extension function.
@@ -36,7 +38,8 @@ def snapshot_object(target, filename, savefun=npz.save_npz):
     """
     @extension.make_extension(trigger=(1, 'epoch'), priority=-100)
     def snapshot_object(trainer):
-        _snapshot_object(trainer, target, filename.format(trainer), savefun)
+        _snapshot_object(trainer, target, filename.format(trainer), savefun,
+                         symlink_name)
 
     return snapshot_object
 
@@ -70,6 +73,8 @@ def snapshot(savefun=npz.save_npz,
         filename (str): Name of the file into which the trainer is serialized.
             It can be a format string, where the trainer object is passed to
             the :meth:`str.format` method.
+        symlink_name (str): Name of symbolic file which the latest snapshot
+            file is linked. This string cannot be formated as `filename`.
 
     """
     @extension.make_extension(trigger=(1, 'epoch'), priority=-100)
@@ -94,24 +99,26 @@ def _snapshot_object(trainer, target, filename, savefun, symlink_name):
     shutil.move(tmppath, os.path.join(trainer.out, fn))
     _create_symlink(fn, trainer.out, symlink_name)
 
+
 def _create_symlink(fn, outdir, symlink_name):
-    if not os.path.isdir(outdir):
-        return
     if symlink_name is None or symlink_name == '':
         return
 
-    if os.path.isabs(symlink_name):
-        src = os.path.abspath(fn)
-    elif os.path.dirname(symlink_name) != '':
-        try:
-            symlink_dir = os.path.join(outdir, os.path.dirname(symlink_name))
-            os.makedirs(symlink_dir)
-        except OSError:
-            pass
-        src = os.path.relpath(fn, start=os.path.dirname(symlink_name))
+    if os.path.dirname(symlink_name) != '':
+        if os.path.isabs(symlink_name):
+            src = os.path.abspath(fn)
+        else:
+            # If directory name contains in symlink name and its not absolute
+            # path, do nothing.
+            return
     else:
         src = fn
     dst = os.path.join(outdir, symlink_name)
-    if os.path.exists(dst) and os.path.islink(dst):
-        os.remove(dst)
+    if os.path.exists(dst):
+        if os.path.islink(dst):
+            os.remove(dst)
+        else:
+            # If destination file already exists and its not
+            # symlink, do nothing.
+            return
     os.symlink(src, dst)
