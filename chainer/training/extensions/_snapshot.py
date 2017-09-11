@@ -104,21 +104,11 @@ def _create_symlink(fn, outdir, symlink_name):
     if symlink_name is None or symlink_name == '':
         return
 
-    if os.path.dirname(symlink_name) != '':
-        if os.path.isabs(symlink_name):
-            src = os.path.abspath(fn)
-        else:
-            # If directory name contains in symlink name and its not absolute
-            # path, do nothing.
-            return
-    else:
-        src = fn
+    src = fn
     dst = os.path.join(outdir, symlink_name)
     if os.path.exists(dst):
         if os.path.islink(dst):
             os.remove(dst)
         else:
-            # If destination file already exists and its not
-            # symlink, do nothing.
             return
     os.symlink(src, dst)
