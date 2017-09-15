@@ -30,7 +30,6 @@ def save_hdf5(filename, target, compression=4):
                 pass
 
 
-
 class SerializerHandler(object):
     """Base class of handler of serializers.
 
