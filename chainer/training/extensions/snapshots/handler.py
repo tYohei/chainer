@@ -29,7 +29,11 @@ class SerializerHandler(object):
     provides :func:`serialize()` and :func:`save` functions.
     """
 
-    def serialize(self, target, savefun=save_npz, **kwds):
+    def __init__(self, savefun=save_npz, **kwds):
+        self.savefun = savefun
+        self.kwds = kwds
+
+    def serialize(self, target):
         """Serialize the given target.
 
         This method creates a standard serializer in Chainer and serialize
@@ -41,8 +45,6 @@ class SerializerHandler(object):
         self.serializer = npz.DictionarySerializer()
         self.serializer.save(target)
         self.target = self.serializer.target
-        self.savefun = savefun
-        self.kwds = kwds
 
     def save(self, filename):
         """Save the serialized target with a given file name.

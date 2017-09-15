@@ -1,8 +1,8 @@
 class Condition(object):
     """Base class of snapshot condition.
 
-    This class gives the condition if a snapshot should be taken or not.
-    :func:`__call__()` is invoked every time when :class:`Snapshot` object's
+    This class represent the condition whether a snapshot should be taken or
+    not. ``__call__()`` is invoked every time when ``Snapshot`` object's
     extension trigger is pulled.
     """
 
@@ -13,9 +13,9 @@ class Condition(object):
         """Determine the condition is met or not.
 
         Args:
-            trainer (Trainer): Trainer object that invokes this operator
-                indirectly.
-            snapshot (Snapshot): Snapshot object that invokes this operator
+            trainer (:class:`~chainer.training.Trainer`): Trainer object that
+            invokes this operator indirectly.
+            snapshot (:class:`~chainer.training.extensions.snapshots.Snapshot`): Snapshot object that invokes this operator
                 directly.
 
         Returns:
@@ -28,7 +28,7 @@ class Always(Condition):
     """Snapshot condition that always return true.
 
     This class always returns true for its condition. This is the default
-    condition for :class:`Snapshot` object.
+    condition for ``Snapshot`` object.
     """
 
     def __init__(self):
