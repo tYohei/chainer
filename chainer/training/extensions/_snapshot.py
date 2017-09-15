@@ -102,7 +102,7 @@ class Snapshot(extension.Extension):
         target: Object to serialize. If not specified, it will
             be trainer object.
         condition: Condition object. It must be a callable object that
-            returns boolean in its call. If its returns True the snapshot will
+            returns boolean in its call. If it returns True the snapshot will
             be done. If not it will be skipped.
         writer: Writer object. It need to be a callable object.
         handler: Serializer handler object.

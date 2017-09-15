@@ -2,7 +2,7 @@ import multiprocessing
 import queue
 import threading
 
-from chainer.training.extensions.snapshot import util
+from chainer.training.extensions.snapshots import util
 
 
 class Writer(object):
@@ -48,15 +48,15 @@ class SimpleWriter(Writer):
     This class just passes the arguments to the actual saving function.
 
     Args:
-        func: Callable object. Must have same interface to `Writer.__call__`
+        savefun: Callable object. Must have same interface to `Writer.__call__`
             method.
     """
 
-    def __init__(self, func=util.save):
-        self._func = func
+    def __init__(self, savefun=util.save):
+        self._savefun = savefun
 
     def __call__(self, filename, outdir, handler):
-        self._func(filename, outdir, handler)
+        self._savefun(filename, outdir, handler)
 
 
 class ThreadWriter(Writer):
@@ -66,16 +66,16 @@ class ThreadWriter(Writer):
     A new thread is created every time `__call__` is invoked.
 
     Args:
-        func: Callable object. Must have same interface to `Writer.__call__`
+        savefun: Callable object. Must have same interface to `Writer.__call__`
             method. Also must need to be able to passed to a thread.
     """
 
-    def __init__(self, func=util.save):
-        self._func = func
+    def __init__(self, savefun=util.save):
+        self._savefun = savefun
         self._flag = False
 
     def __call__(self, filename, outdir, handler):
-        self._thread = threading.Thread(target=self._func,
+        self._thread = threading.Thread(target=self._savefun,
                                         args=(filename, outdir, handler))
         self._thread.start()
         self._flag = True
@@ -97,17 +97,17 @@ class ProcessWriter(Writer):
         using MPI in ChainerMN.
 
     Args:
-        func: Callable object. Must have same interface to `Writer.__call__`
+        savefun: Callable object. Must have same interface to `Writer.__call__`
             method. Also must need to be able to passed to a thread.
     """
 
-    def __init__(self, func=util.save):
-        self._func = func
+    def __init__(self, savefun=util.save):
+        self._savefun = savefun
         self._flag = False
 
     def __call__(self, filename, outdir, handler):
         self._process = multiprocessing.Process(
-            target=self._func,
+            target=self._savefun,
             args=(filename, outdir, handler))
         self._process.start()
         self._flag = True
